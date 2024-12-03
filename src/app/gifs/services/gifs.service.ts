@@ -14,27 +14,46 @@ export class GifsService {
   private serviceURL: string = "http://api.giphy.com/v1/gifs"
 
 
-  constructor(private http: HttpClient) { }
+  constructor(private http: HttpClient) {
+    this.loadLocalStorage();
+    console.log("Ready...")
+   }
+
+  private saveLocalStorage(): void{
+    localStorage.setItem('history',JSON.stringify(this._tagsHistory))
+  }
+
+  private loadLocalStorage(): void {
+    const storedHistory = localStorage.getItem('history');
+    this._tagsHistory = storedHistory ? JSON.parse(storedHistory) : [];
+
+    // Verificar que el primer elemento no sea undefined o vacío
+    if (this._tagsHistory.length > 0) {
+      this.searchTag(this._tagsHistory[0]);
+    }
+  }
+
 
   get tagsHistory(){
     return [...this._tagsHistory]
   }
 
-  private organizeHistory(tag: string){
+  private organizeHistory(tag: string): void {
     tag = tag.toLocaleLowerCase();
 
-    if (this._tagsHistory.includes(tag)){
-      this._tagsHistory = this._tagsHistory.filter( (oldTag)=> oldTag !== tag )
+    if (this._tagsHistory.includes(tag)) {
+      this._tagsHistory = this._tagsHistory.filter(oldTag => oldTag !== tag);
     }
 
     this._tagsHistory.unshift(tag);
 
-    this._tagsHistory = this.tagsHistory.splice(0,10);
-
+    // Mantener solo los 10 primeros elementos
+    this._tagsHistory = this._tagsHistory.slice(0, 10);  // Usar slice para obtener una nueva lista
+    this.saveLocalStorage();
   }
 
   searchTag(tag: string): void {
-    if (tag.length === 0 ) return;
+    if (tag.length == 0 ) return;
     this.organizeHistory(tag);
 
     const params = new HttpParams()
